@@ -1,0 +1,17 @@
+# BigQuery and Google Cloud
+google-cloud-bigquery==3.11.4
+google-auth==2.23.3
+google-cloud-storage==2.10.0
+
+# API integrations  
+requests==2.31.0
+pandas==2.1.1
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.4.2
+sqlalchemy==2.0.21
+
+# Development and testing
+pytest==7.4.2
+black==23.7.0
