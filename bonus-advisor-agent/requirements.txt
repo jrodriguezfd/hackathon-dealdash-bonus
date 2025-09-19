@@ -1,0 +1,58 @@
+# # Core Flask dependencies
+# Flask==3.0.0
+# gunicorn==21.2.0
+
+# # Google Cloud dependencies
+# google-cloud-bigquery==3.13.0
+# google-cloud-aiplatform>=1.52.0
+# vertexai
+
+# # Data processing
+# pandas==2.1.4
+# numpy==1.24.3
+
+# # HTTP and utilities
+# requests==2.31.0
+# python-dateutil==2.8.2
+
+# # Environment and configuration
+# python-dotenv==1.0.0
+
+# # JSON and validation
+# jsonschema==4.20.0
+
+# # Logging and monitoring
+# google-cloud-logging==3.8.0
+
+# # Security
+# cryptography>=42.0.0
+
+# # Development and testing (optional, remove for production)
+# pytest==7.4.3
+# pytest-flask==1.3.0
+
+# Core Flask dependencies
+Flask>=3.0,<4.0
+gunicorn>=21.2.0
+
+# Google Cloud dependencies
+google-cloud-bigquery>=3.13.0
+google-cloud-aiplatform>=1.52.0
+google-cloud-logging>=3.8.0
+
+# Data processing
+pandas>=2.1.4
+numpy>=1.24.3
+
+# HTTP and utilities
+requests>=2.31.0
+python-dateutil>=2.8.2
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# JSON and validation
+jsonschema>=4.20.0
+
+# Security
+cryptography>=42.0.0

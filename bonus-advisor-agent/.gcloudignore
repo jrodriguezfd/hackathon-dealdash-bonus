@@ -1,0 +1,11 @@
+.git
+.gitignore
+README.md
+.env
+.env.*
+tests/
+config/service-account-key.json
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/

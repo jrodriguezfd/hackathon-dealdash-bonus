@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonus Advisor Agent</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .chat-container {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 15px;
+        background-color: #f8f9fa;
+      }
+      .message {
+        margin-bottom: 15px;
+      }
+      .user-message {
+        text-align: right;
+      }
+      .user-message .message-content {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 18px;
+        display: inline-block;
+        max-width: 70%;
+      }
+      .agent-message .message-content {
+        background-color: white;
+        border: 1px solid #ddd;
+        padding: 10px 15px;
+        border-radius: 18px;
+        display: inline-block;
+        max-width: 70%;
+      }
+      .metrics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      .breakdown-card {
+        transition: transform 0.2s;
+      }
+      .breakdown-card:hover {
+        transform: translateY(-5px);
+      }
+      .recommendation-item {
+        border-left: 4px solid #28a745;
+        padding-left: 15px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-primary">
+      <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">
+          <i class="fas fa-robot"></i> Bonus Advisor Agent
+        </span>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+      <div class="row">
+        <!-- Panel de Chat -->
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>
+                <i class="fas fa-comments"></i> Chat con el Asistente de Bonos
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="consultantId" class="form-label"
+                  >ID del Consultor</label
+                >
+                <select class="form-select" id="consultantId">
+                  <option value="">Seleccionar consultor...</option>
+                  <option value="CONS001">
+                    CONS001 - Rodolfo Solar (Sales)
+                  </option>
+                  <option value="CONS002">
+                    CONS002 - Anthony Alarcon (Delivery)
+                  </option>
+                  <option value="CONS003">
+                    CONS003 - Julian Rodriguez (Hybrid)
+                  </option>
+                </select>
+              </div>
+
+              <div class="chat-container" id="chatContainer">
+                <div class="message agent-message">
+                  <div class="message-content">
+                    <strong>Asistente:</strong> ¡Hola! Soy tu asistente de
+                    bonos. Puedes preguntarme sobre:
+                    <ul class="mt-2 mb-0">
+                      <li>Tu bono actual y cómo se calculó</li>
+                      <li>Qué necesitas para maximizar tus bonos</li>
+                      <li>Definiciones de KPIs específicos</li>
+                      <li>Comparaciones con otros consultores</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="messageInput"
+                    placeholder="Escribe tu pregunta aquí..."
+                    onkeypress="handleKeyPress(event)"
+                  />
+                  <button
+                    class="btn btn-primary"
+                    type="button"
+                    onclick="sendMessage()"
+                  >
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <small class="text-muted">
+                  Ejemplos: "¿Cuál es mi bono actual?", "¿Cómo puedo maximizar
+                  mi bono?", "Explícame el TCV Individual"
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de Métricas -->
+        <div class="col-lg-6">
+          <div class="card metrics-card">
+            <div class="card-header">
+              <h5><i class="fas fa-chart-line"></i> Resumen de Bonos</h5>
+            </div>
+            <div class="card-body" id="metricsPanel">
+              <p class="text-center">
+                Selecciona un consultor para ver sus métricas
+              </p>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <div class="card-header">
+              <h5><i class="fas fa-lightbulb"></i> Recomendaciones</h5>
+            </div>
+            <div class="card-body" id="recommendationsPanel">
+              <p class="text-center text-muted">
+                Las recomendaciones aparecerán aquí
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard General -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>
+                <i class="fas fa-chart-bar"></i> Dashboard General de Bonos
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row" id="dashboardCharts">
+                <div class="col-md-6">
+                  <canvas id="planComparisonChart"></canvas>
+                </div>
+                <div class="col-md-6">
+                  <canvas id="bonusDistributionChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desglose Detallado -->
+      <div class="row mt-4" id="detailedBreakdown" style="display: none">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>
+                <i class="fas fa-calculator"></i> Desglose Detallado del Bono
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row" id="breakdownContent">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      let chatHistory = [];
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      function sendMessage() {
+        const messageInput = document.getElementById("messageInput");
+        const consultantId = document.getElementById("consultantId").value;
+        const message = messageInput.value.trim();
+
+        if (!message) return;
+
+        // Agregar mensaje del usuario al chat
+        addMessageToChat("user", message);
+        messageInput.value = "";
+
+        // Mostrar indicador de carga
+        addMessageToChat(
+          "agent",
+          'Procesando tu consulta... <i class="fas fa-spinner fa-spin"></i>'
+        );
+
+        // Enviar mensaje al agente
+        fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: message,
+            consultant_id: consultantId,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Remover indicador de carga
+            const chatContainer = document.getElementById("chatContainer");
+            chatContainer.removeChild(chatContainer.lastChild);
+
+            // Agregar respuesta del agente
+            addMessageToChat("agent", data.response);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            addMessageToChat(
+              "agent",
+              "Lo siento, hubo un error al procesar tu consulta."
+            );
+          });
+      }
+
+      function addMessageToChat(sender, message) {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}-message`;
+
+        const contentDiv = document.createElement("div");
+        contentDiv.className = "message-content";
+        contentDiv.innerHTML =
+          sender === "user"
+            ? message
+            : `<strong>Asistente:</strong> ${message}`;
+
+        messageDiv.appendChild(contentDiv);
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      function loadConsultantData() {
+        const consultantId = document.getElementById("consultantId").value;
+
+        if (!consultantId) {
+          document.getElementById("metricsPanel").innerHTML =
+            '<p class="text-center">Selecciona un consultor para ver sus métricas</p>';
+          document.getElementById("recommendationsPanel").innerHTML =
+            '<p class="text-center text-muted">Las recomendaciones aparecerán aquí</p>';
+          return;
+        }
+
+        // Cargar métricas del consultor
+        fetch(`/api/bonus/${consultantId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              document.getElementById(
+                "metricsPanel"
+              ).innerHTML = `<p class="text-center text-danger">${data.error}</p>`;
+              return;
+            }
+
+            displayMetrics(data);
+            loadBreakdown(consultantId);
+            loadRecommendations(consultantId, data.plan_type);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("metricsPanel").innerHTML =
+              '<p class="text-center text-danger">Error al cargar las métricas</p>';
+          });
+      }
+
+      function displayMetrics(data) {
+        const metricsHtml = `
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="display-4">$${
+                          data.total_bonus?.toFixed(0) || 0
+                        }</h3>
+                        <p class="mb-0">Bono Total</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="display-4">${
+                          data.project_hours?.toFixed(0) || 0
+                        }</h3>
+                        <p class="mb-0">Horas de Proyecto</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="display-4">$${(
+                          data.individual_tcv || 0
+                        ).toFixed(0)}</h3>
+                        <p class="mb-0">TCV Individual</p>
+                    </div>
+                </div>
+                <hr class="bg-white">
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <p><strong>Plan:</strong> ${data.plan_type}</p>
+                        <p><strong>Periodo:</strong> Q${data.quarter} ${
+          data.year
+        }</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Efficiency:</strong> ${(
+                          data.project_hours_percentage || 0
+                        ).toFixed(1)}%</p>
+                        <p><strong>Timeline Adherence:</strong> ${(
+                          data.timeline_adherence_percentage || 0
+                        ).toFixed(1)}%</p>
+                    </div>
+                </div>
+            `;
+
+        document.getElementById("metricsPanel").innerHTML = metricsHtml;
+      }
+
+      function loadBreakdown(consultantId) {
+        fetch(`/api/breakdown/${consultantId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) return;
+
+            displayBreakdown(data);
+          });
+      }
+
+      function displayBreakdown(data) {
+        let breakdownHtml = "";
+
+        Object.entries(data.breakdown).forEach(([category, items]) => {
+          breakdownHtml += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card breakdown-card h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0">${category}</h6>
+                            </div>
+                            <div class="card-body">
+                `;
+
+          Object.entries(items).forEach(([item, value]) => {
+            breakdownHtml += `
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small">${item}</span>
+                            <strong>$${value.toFixed(0)}</strong>
+                        </div>
+                    `;
+          });
+
+          breakdownHtml += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+        });
+
+        document.getElementById("breakdownContent").innerHTML = breakdownHtml;
+        document.getElementById("detailedBreakdown").style.display = "block";
+      }
+
+      function loadRecommendations(consultantId, planType) {
+        fetch(`/api/recommendations/${consultantId}/${planType}`)
+          .then((response) => response.json())
+          .then((data) => {
+            let recommendationsHtml = "";
+
+            if (data.recommendations && data.recommendations.length > 0) {
+              data.recommendations.forEach((rec) => {
+                recommendationsHtml += `
+                                <div class="recommendation-item">
+                                    <p class="mb-1">${rec}</p>
+                                </div>
+                            `;
+              });
+            } else {
+              recommendationsHtml =
+                '<p class="text-muted">¡Excelente! Estás maximizando tus bonos.</p>';
+            }
+
+            document.getElementById("recommendationsPanel").innerHTML =
+              recommendationsHtml;
+          });
+      }
+
+      function loadDashboard() {
+        fetch("/api/dashboard")
+          .then((response) => response.json())
+          .then((data) => {
+            createPlanComparisonChart(data);
+            createBonusDistributionChart(data);
+          });
+      }
+
+      function createPlanComparisonChart(data) {
+        const ctx = document
+          .getElementById("planComparisonChart")
+          .getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: data.map((d) => d.plan_type),
+            datasets: [
+              {
+                label: "Bono Promedio",
+                data: data.map((d) => d.avg_bonus),
+                backgroundColor: ["#007bff", "#28a745", "#ffc107"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Bono Promedio por Plan",
+              },
+            },
+          },
+        });
+      }
+
+      function createBonusDistributionChart(data) {
+        const ctx = document
+          .getElementById("bonusDistributionChart")
+          .getContext("2d");
+        new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: data.map((d) => d.plan_type),
+            datasets: [
+              {
+                data: data.map((d) => d.consultant_count),
+                backgroundColor: ["#007bff", "#28a745", "#ffc107"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Distribución de Consultores",
+              },
+            },
+          },
+        });
+      }
+
+      // Event listeners
+      document
+        .getElementById("consultantId")
+        .addEventListener("change", loadConsultantData);
+
+      // Inicializar dashboard
+      loadDashboard();
+    </script>
+  </body>
+</html>
